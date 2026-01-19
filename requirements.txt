@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+aiohttp
+beautifulsoup4
+spacy
+dnspython
+openai
+email-validator
+pydantic

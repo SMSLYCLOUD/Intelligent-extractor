@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligent Lead Extractor</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #475569;
+            --success: #16a34a;
+            --warning: #ca8a04;
+            --danger: #dc2626;
+            --bg: #f8fafc;
+            --card: #ffffff;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg);
+            color: #1e293b;
+            line-height: 1.5;
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        input[type="text"], input[type="number"], input[type="password"] {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.25rem;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        button:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .summary-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .lead-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: white;
+            border-left: 4px solid var(--secondary);
+        }
+
+        .lead-card.high { border-left-color: var(--success); }
+        .lead-card.medium { border-left-color: var(--warning); }
+        .lead-card.low { border-left-color: var(--secondary); }
+        .lead-card.reject { border-left-color: var(--danger); opacity: 0.7; }
+
+        .lead-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .email {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .badges {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-score { background: #e0f2fe; color: #0369a1; }
+        .badge-valid { background: #dcfce7; color: #15803d; }
+        .badge-invalid { background: #fee2e2; color: #b91c1c; }
+
+        .details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: #475569;
+        }
+
+        .detail-group h4 {
+            margin: 0 0 0.25rem 0;
+            color: #1e293b;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Intelligent Lead Extractor AI</h1>
+            <p>Advanced lead discovery, validation, and scoring system</p>
+        </div>
+
+        <div class="card">
+            <form id="extractForm">
+                <div class="form-group">
+                    <label for="url">Target Website URL</label>
+                    <input type="text" id="url" name="url" placeholder="https://example.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="keywords">Keywords (comma separated)</label>
+                    <input type="text" id="keywords" name="keywords" placeholder="CEO, Marketing, Engineering, CTO" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="apiKey">OpenAI API Key (Optional - for semantic analysis)</label>
+                    <input type="password" id="apiKey" name="apiKey" placeholder="sk-...">
+                </div>
+
+                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label for="maxDepth">Max Depth</label>
+                        <input type="number" id="maxDepth" name="maxDepth" value="2" min="1" max="5">
+                    </div>
+                    <div>
+                        <label for="maxPages">Max Pages</label>
+                        <input type="number" id="maxPages" name="maxPages" value="20" min="1" max="100">
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn">Start Extraction</button>
+            </form>
+        </div>
+
+        <div id="loading" class="hidden">
+            <div class="card" style="text-align: center;">
+                <div class="spinner"></div>
+                <p>Analyzing website structure and extracting leads... This may take a minute.</p>
+            </div>
+        </div>
+
+        <div id="results" class="hidden">
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="summary-number" id="totalLeads">0</div>
+                    <div>Total Leads</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-number" id="highQuality" style="color: var(--success)">0</div>
+                    <div>High Quality</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-number" id="mediumQuality" style="color: var(--warning)">0</div>
+                    <div>Medium Quality</div>
+                </div>
+            </div>
+
+            <div id="leadsList">
+                <!-- Leads will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('extractForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const btn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+
+            btn.disabled = true;
+            loading.classList.remove('hidden');
+            results.classList.add('hidden');
+
+            const payload = {
+                url: document.getElementById('url').value,
+                keywords: document.getElementById('keywords').value.split(',').map(k => k.trim()),
+                max_depth: parseInt(document.getElementById('maxDepth').value),
+                max_pages: parseInt(document.getElementById('maxPages').value),
+                openai_key: document.getElementById('apiKey').value || null
+            };
+
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                renderResults(data);
+            } catch (err) {
+                alert('Extraction failed: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                loading.classList.add('hidden');
+            }
+        });
+
+        function renderResults(data) {
+            document.getElementById('results').classList.remove('hidden');
+
+            // Summary
+            document.getElementById('totalLeads').textContent = data.summary.total_leads_found;
+            document.getElementById('highQuality').textContent = data.summary.high_quality;
+            document.getElementById('mediumQuality').textContent = data.summary.medium_quality;
+
+            // List
+            const list = document.getElementById('leadsList');
+            list.innerHTML = '';
+
+            data.leads.forEach(lead => {
+                const card = document.createElement('div');
+                card.className = `lead-card ${lead.lead_quality}`;
+
+                const matches = lead.keyword_matches.map(m =>
+                    `<span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.75em;">${m.keyword}</span>`
+                ).join(' ');
+
+                card.innerHTML = `
+                    <div class="lead-header">
+                        <div class="email">${lead.email}</div>
+                        <div class="badges">
+                            <span class="badge badge-score">Score: ${lead.relevance_score}</span>
+                            <span class="badge ${lead.validation.mx_records_found ? 'badge-valid' : 'badge-invalid'}">
+                                ${lead.validation.mx_records_found ? 'MX Valid' : 'MX Failed'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="details">
+                        <div class="detail-group">
+                            <h4>Person</h4>
+                            <div><strong>Name:</strong> ${lead.person.full_name || 'Unknown'}</div>
+                            <div><strong>Role:</strong> ${lead.person.job_title || 'Unknown'}</div>
+                            <div><strong>Seniority:</strong> ${lead.person.seniority || 'Unknown'}</div>
+                        </div>
+                        <div class="detail-group">
+                            <h4>Context</h4>
+                            <div><strong>Matches:</strong> ${matches || 'None'}</div>
+                            <div><strong>Source:</strong> ${lead.source.page_title}</div>
+                            <div><strong>Found via:</strong> ${lead.source.discovery_method}</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 0.5rem; font-size: 0.8em; color: #64748b; font-style: italic;">
+                        "${lead.source.context_snippet}"
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>
