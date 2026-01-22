@@ -2,6 +2,7 @@ import spacy
 from typing import List, Dict, Optional
 import os
 from openai import AsyncOpenAI
+import google.generativeai as genai
 import json
 
 # Load Spacy model once
@@ -65,16 +66,26 @@ class LocalIntelligence:
         }
 
 class RemoteIntelligence:
-    def __init__(self, api_key: str):
-        self.client = None
+    def __init__(self, provider: str = "openai", api_key: str = None):
+        self.provider = provider
+        self.openai_client = None
+        self.gemini_model = None
+
         if api_key:
-            self.client = AsyncOpenAI(api_key=api_key)
+            if provider == "openai":
+                self.openai_client = AsyncOpenAI(api_key=api_key)
+            elif provider == "gemini":
+                genai.configure(api_key=api_key)
+                # Use the latest fast model
+                self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
 
     async def analyze_relevance_semantic(self, context: str, keywords: List[str], person_name: str = None) -> Dict[str, any]:
         """
-        Uses OpenAI to analyze the semantic relevance of the context.
+        Uses OpenAI or Gemini to analyze the semantic relevance of the context.
         """
-        if not self.client:
+        if self.provider == "openai" and not self.openai_client:
+            return None
+        if self.provider == "gemini" and not self.gemini_model:
             return None
 
         prompt = f"""
@@ -101,16 +112,30 @@ class RemoteIntelligence:
         """
 
         try:
-            response = await self.client.chat.completions.create(
-                model="gpt-3.5-turbo", # Use a cost-effective model
-                messages=[
-                    {"role": "system", "content": "You are a lead qualification expert. Output JSON only."},
-                    {"role": "user", "content": prompt}
-                ],
-                response_format={ "type": "json_object" }
-            )
-            content = response.choices[0].message.content
-            return json.loads(content)
+            if self.provider == "openai":
+                response = await self.openai_client.chat.completions.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": "You are a lead qualification expert. Output JSON only."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    response_format={ "type": "json_object" }
+                )
+                content = response.choices[0].message.content
+                return json.loads(content)
+
+            elif self.provider == "gemini":
+                # Gemini often outputs Markdown blocks (```json ... ```). We need to strip them.
+                response = await self.gemini_model.generate_content_async(
+                    f"You are a lead qualification expert. Output JSON only.\n\n{prompt}"
+                )
+                content = response.text
+                if content.startswith("```json"):
+                    content = content[7:]
+                if content.endswith("```"):
+                    content = content[:-3]
+                return json.loads(content.strip())
+
         except Exception as e:
-            print(f"OpenAI Error: {e}")
+            print(f"{self.provider.capitalize()} Error: {e}")
             return None

@@ -6,9 +6,9 @@ from app.backend.models import Lead, PersonInfo, CompanyInfo, SourceInfo, Valida
 from app.backend.intelligence import LocalIntelligence, RemoteIntelligence
 
 class Extractor:
-    def __init__(self, openai_api_key: Optional[str] = None):
+    def __init__(self, ai_provider: str = "openai", api_key: Optional[str] = None):
         self.local_intel = LocalIntelligence()
-        self.remote_intel = RemoteIntelligence(openai_api_key) if openai_api_key else None
+        self.remote_intel = RemoteIntelligence(ai_provider, api_key) if api_key else None
 
         # Regex for emails: Standard + simple obfuscation
         self.email_pattern = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
@@ -65,16 +65,7 @@ class Extractor:
             entities = self.local_intel.extract_entities(context)
             if entities["PERSON"]:
                 # Improvement: Find person closest to the email in context
-                # "email" is somewhere in "context" (or represented by placeholders if obfuscated)
-                # Since we don't have exact offsets mapped to context easily without re-running spacy on full text with offsets,
-                # we will trust the order. Usually the person is introduced BEFORE the email.
-                # So we pick the last person found in the list (assuming list order roughly matches text order for this simple extraction)
-                # Actually, Spacy returns entities in order of appearance.
-                # If email is at the end of context, the closest person is likely the last one found.
-                # If email is in the middle...
-                # Let's try picking the LAST person in the list, as "Contact John Doe at..." -> John Doe is before.
                 lead.person.full_name = entities["PERSON"][-1]
-
                 names = lead.person.full_name.split()
                 if len(names) > 0: lead.person.first_name = names[0]
                 if len(names) > 1: lead.person.last_name = " ".join(names[1:])

@@ -7,3 +7,6 @@ dnspython
 openai
 email-validator
 pydantic
+python-dotenv
+google-generativeai
+python-multipart
