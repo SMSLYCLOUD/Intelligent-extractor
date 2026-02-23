@@ -4,365 +4,353 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Intelligent Lead Extractor AI</title>
-    <style>
-        :root {
-            --primary: #2563eb;
-            --secondary: #475569;
-            --success: #16a34a;
-            --warning: #ca8a04;
-            --danger: #dc2626;
-            --bg: #f8fafc;
-            --card: #ffffff;
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        secondary: '#475569',
+                    }
+                }
+            }
         }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--bg);
-            color: #1e293b;
-            line-height: 1.5;
-            margin: 0;
-            padding: 2rem;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .header {
-            margin-bottom: 2rem;
-            text-align: center;
-        }
-
-        .card {
-            background: var(--card);
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .tabs {
-            display: flex;
-            margin-bottom: 1rem;
-            border-bottom: 2px solid #e2e8f0;
-        }
-
-        .tab {
-            padding: 0.75rem 1.5rem;
-            cursor: pointer;
-            font-weight: 600;
-            color: var(--secondary);
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
-        }
-
-        .tab.active {
-            color: var(--primary);
-            border-bottom-color: var(--primary);
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-        }
-
-        input[type="text"], input[type="number"], input[type="password"], select, input[type="file"] {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #cbd5e1;
-            border-radius: 0.25rem;
-            box-sizing: border-box;
-        }
-
-        button {
-            background-color: var(--primary);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 0.25rem;
-            cursor: pointer;
-            font-weight: 600;
-            width: 100%;
-        }
-
-        button:hover {
-            background-color: #1d4ed8;
-        }
-
-        button.stop-btn {
-            background-color: var(--danger);
-            margin-top: 1rem;
-        }
-
-        button.stop-btn:hover {
-             background-color: #b91c1c;
-        }
-
-        button:disabled {
-            background-color: #94a3b8;
-            cursor: not-allowed;
-        }
-
-        .hidden { display: none; }
-
-        /* Results Styles */
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .summary-card {
-            background: white;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            text-align: center;
-            border: 1px solid #e2e8f0;
-        }
-
-        .summary-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
-
-        .lead-card {
-            border: 1px solid #e2e8f0;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            background: white;
-            border-left: 4px solid var(--secondary);
-            animation: fadeIn 0.5s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .lead-card.high { border-left-color: var(--success); }
-        .lead-card.medium { border-left-color: var(--warning); }
-        .lead-card.low { border-left-color: var(--secondary); }
-        .lead-card.reject { border-left-color: var(--danger); opacity: 0.7; }
-
-        .lead-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-
-        .email {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--primary);
-        }
-
-        .badges {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .badge {
-            padding: 0.25rem 0.5rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .badge-score { background: #e0f2fe; color: #0369a1; }
-        .badge-valid { background: #dcfce7; color: #15803d; }
-        .badge-invalid { background: #fee2e2; color: #b91c1c; }
-
-        .details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1rem;
-            font-size: 0.875rem;
-            color: #475569;
-        }
-
-        #statusMessage {
-            text-align: center;
-            color: var(--secondary);
-            font-style: italic;
-            margin-bottom: 1rem;
-        }
-    </style>
+    </script>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Intelligent Lead Extractor AI</h1>
-            <p>Live Web Discovery & Bulk Enrichment</p>
-        </div>
+<body class="bg-slate-50 text-slate-800 font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-primary mb-2">Intelligent Lead Extractor AI</h1>
+            <p class="text-slate-500">Advanced Web Discovery & Enrichment System</p>
+        </header>
 
-        <div class="card">
-            <div class="tabs">
-                <div class="tab active" onclick="switchTab('discovery')">Web Discovery</div>
-                <div class="tab" onclick="switchTab('bulk')">Bulk Enrichment</div>
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <!-- Navigation Tabs -->
+            <div class="flex border-b border-slate-200">
+                <button onclick="switchTab('discovery')" class="tab-btn px-6 py-4 font-semibold text-slate-600 hover:text-primary border-b-2 border-transparent hover:border-primary transition-colors active" data-tab="discovery">
+                    <i class="fas fa-search mr-2"></i> Web Discovery
+                </button>
+                <button onclick="switchTab('bulk')" class="tab-btn px-6 py-4 font-semibold text-slate-600 hover:text-primary border-b-2 border-transparent hover:border-primary transition-colors" data-tab="bulk">
+                    <i class="fas fa-file-upload mr-2"></i> Bulk Enrichment
+                </button>
+                <button onclick="switchTab('history')" class="tab-btn px-6 py-4 font-semibold text-slate-600 hover:text-primary border-b-2 border-transparent hover:border-primary transition-colors" data-tab="history">
+                    <i class="fas fa-history mr-2"></i> History
+                </button>
             </div>
 
-            <!-- AI Settings Common -->
-            <div class="form-group" style="background: #f1f5f9; padding: 1rem; border-radius: 0.5rem;">
-                <label>AI Intelligence Provider</label>
-                <select id="aiProvider" onchange="toggleKeyInput()">
-                    <option value="openai">OpenAI (GPT-3.5)</option>
-                    <option value="gemini">Google Gemini (Flash)</option>
-                </select>
-                <div id="openaiInput" class="form-group" style="margin-top: 10px;">
-                    <label for="openaiKey">OpenAI API Key</label>
-                    <input type="password" id="openaiKey" placeholder="sk-...">
-                </div>
-                <div id="geminiInput" class="form-group hidden" style="margin-top: 10px;">
-                    <label for="geminiKey">Gemini API Key</label>
-                    <input type="password" id="geminiKey" placeholder="AIza...">
-                </div>
-            </div>
-
-            <!-- Discovery Form -->
-            <div id="discoveryForm">
-                <div class="form-group">
-                    <label for="url">Target Website URL</label>
-                    <input type="text" id="url" name="url" placeholder="https://example.com" required>
-                </div>
-                <div class="form-group">
-                    <label for="keywords1">Keywords (comma separated)</label>
-                    <input type="text" id="keywords1" name="keywords" placeholder="CEO, Marketing, CTO" required>
-                </div>
-                <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div>
-                        <label for="maxDepth">Max Depth</label>
-                        <input type="number" id="maxDepth" name="maxDepth" value="2" min="1" max="5">
-                    </div>
-                    <div>
-                        <label for="maxPages">Max Pages</label>
-                        <input type="number" id="maxPages" name="maxPages" value="20" min="1" max="100">
+            <div class="p-6">
+                <!-- AI Settings (Common) -->
+                <div class="mb-6 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                    <h3 class="font-semibold text-slate-700 mb-3"><i class="fas fa-robot mr-2"></i>AI Configuration</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">Provider</label>
+                            <select id="aiProvider" onchange="toggleKeyInput()" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                                <option value="openai">OpenAI (GPT-3.5)</option>
+                                <option value="gemini">Google Gemini</option>
+                                <option value="anthropic">Anthropic (Claude)</option>
+                                <option value="ollama">Ollama (Local)</option>
+                            </select>
+                        </div>
+                        <div id="apiKeyContainer">
+                            <label class="block text-sm font-medium text-slate-600 mb-1">API Key</label>
+                            <input type="password" id="apiKey" placeholder="sk-..." class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            <p class="text-xs text-slate-400 mt-1" id="keyHelp">Leave blank if set in environment variables.</p>
+                        </div>
                     </div>
                 </div>
-                <button onclick="startDiscovery()">Start Extraction</button>
-            </div>
 
-            <!-- Bulk Form -->
-            <div id="bulkForm" class="hidden">
-                <div class="form-group">
-                    <label for="file">Upload Email List (CSV or TXT)</label>
-                    <input type="file" id="file" name="file" accept=".txt,.csv" required>
-                    <small>One email per line or comma-separated</small>
+                <!-- Discovery Tab -->
+                <div id="discovery" class="tab-content">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-600 mb-1">Target Website URL</label>
+                            <input type="text" id="url" placeholder="https://example.com" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-slate-600 mb-1">Keywords (comma separated)</label>
+                            <input type="text" id="keywords1" placeholder="CEO, Marketing, CTO" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">Crawler Type</label>
+                            <select id="crawlerType" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-primary outline-none">
+                                <option value="fast">Fast (HTTP/Soup)</option>
+                                <option value="deep">Deep (Browser/JS)</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 mb-1">Max Depth</label>
+                                <input type="number" id="maxDepth" value="2" min="1" max="5" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-primary outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 mb-1">Max Pages</label>
+                                <input type="number" id="maxPages" value="20" min="1" max="100" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-primary outline-none">
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="startDiscovery()" class="mt-6 w-full bg-primary hover:bg-blue-700 text-white font-bold py-3 px-4 rounded transition duration-200">
+                        Start Extraction
+                    </button>
                 </div>
-                <div class="form-group">
-                    <label for="keywords2">Keywords (comma separated)</label>
-                    <input type="text" id="keywords2" name="keywords" placeholder="CEO, Marketing, CTO" required>
-                </div>
-                <button onclick="startBulk()">Start Bulk Enrichment</button>
-            </div>
 
-            <button id="stopBtn" class="stop-btn hidden" onclick="stopProcess()">Stop Processing</button>
+                <!-- Bulk Tab -->
+                <div id="bulk" class="tab-content hidden">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">Upload Email List (CSV/TXT)</label>
+                            <input type="file" id="file" accept=".txt,.csv" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-primary outline-none">
+                            <p class="text-xs text-slate-500 mt-1">One email per line or comma-separated.</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">Keywords</label>
+                            <input type="text" id="keywords2" placeholder="CTO, Engineering" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                    </div>
+                    <button onclick="startBulk()" class="mt-6 w-full bg-primary hover:bg-blue-700 text-white font-bold py-3 px-4 rounded transition duration-200">
+                        Start Bulk Enrichment
+                    </button>
+                </div>
+
+                <!-- History Tab -->
+                <div id="history" class="tab-content hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-left text-sm whitespace-nowrap">
+                            <thead class="uppercase tracking-wider border-b-2 border-slate-200 bg-slate-50">
+                                <tr>
+                                    <th class="px-6 py-4 text-slate-600">ID</th>
+                                    <th class="px-6 py-4 text-slate-600">Target</th>
+                                    <th class="px-6 py-4 text-slate-600">Date</th>
+                                    <th class="px-6 py-4 text-slate-600">Leads</th>
+                                    <th class="px-6 py-4 text-slate-600">Status</th>
+                                    <th class="px-6 py-4 text-slate-600">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody" class="divide-y divide-slate-100">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <button onclick="loadHistory()" class="mt-4 text-primary hover:underline text-sm">Refresh History</button>
+                </div>
+            </div>
         </div>
 
-        <div id="results" class="hidden">
-            <div id="statusMessage">Waiting for data...</div>
-
-            <div class="summary-grid">
-                <div class="summary-card">
-                    <div class="summary-number" id="totalLeads">0</div>
-                    <div>Total Leads</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-number" id="highQuality" style="color: var(--success)">0</div>
-                    <div>High Quality</div>
-                </div>
-                <div class="summary-card">
-                    <div class="summary-number" id="mediumQuality" style="color: var(--warning)">0</div>
-                    <div>Medium Quality</div>
+        <!-- Processing / Results Section -->
+        <div id="resultsSection" class="mt-8 hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-slate-800">Results</h2>
+                <div class="flex gap-2">
+                    <button id="exportBtn" onclick="exportCSV()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow transition hidden">
+                        <i class="fas fa-download mr-2"></i> Export CSV
+                    </button>
+                    <button id="stopBtn" onclick="stopProcess()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow transition">
+                        Stop
+                    </button>
                 </div>
             </div>
-            <div id="leadsList"></div>
+
+            <!-- Status Bar -->
+            <div id="statusBar" class="bg-blue-50 text-blue-700 p-4 rounded mb-6 text-center italic border border-blue-100">
+                Initializing...
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-4 rounded shadow text-center border-l-4 border-slate-400">
+                    <div class="text-3xl font-bold text-slate-700" id="totalLeads">0</div>
+                    <div class="text-sm text-slate-500">Total Leads</div>
+                </div>
+                <div class="bg-white p-4 rounded shadow text-center border-l-4 border-green-500">
+                    <div class="text-3xl font-bold text-green-600" id="highQuality">0</div>
+                    <div class="text-sm text-slate-500">High Quality</div>
+                </div>
+                <div class="bg-white p-4 rounded shadow text-center border-l-4 border-yellow-500">
+                    <div class="text-3xl font-bold text-yellow-600" id="mediumQuality">0</div>
+                    <div class="text-sm text-slate-500">Medium Quality</div>
+                </div>
+                <div class="bg-white p-4 rounded shadow text-center border-l-4 border-red-500">
+                    <div class="text-3xl font-bold text-red-600" id="lowQuality">0</div>
+                    <div class="text-sm text-slate-500">Low Quality</div>
+                </div>
+            </div>
+
+            <!-- Leads List -->
+            <div id="leadsList" class="space-y-4">
+                <!-- Cards injected here -->
+            </div>
         </div>
     </div>
 
     <script>
         let ws;
+        let currentJobId = null;
         let stats = { total: 0, high: 0, medium: 0, low: 0 };
 
         function switchTab(tab) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(tab).classList.remove('hidden');
 
-            if (tab === 'discovery') {
-                document.getElementById('discoveryForm').classList.remove('hidden');
-                document.getElementById('bulkForm').classList.add('hidden');
-            } else {
-                document.getElementById('discoveryForm').classList.add('hidden');
-                document.getElementById('bulkForm').classList.remove('hidden');
-            }
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('text-primary', 'border-primary', 'active');
+                btn.classList.add('text-slate-600', 'border-transparent');
+                if(btn.dataset.tab === tab) {
+                    btn.classList.add('text-primary', 'border-primary', 'active');
+                    btn.classList.remove('text-slate-600', 'border-transparent');
+                }
+            });
+
+            if(tab === 'history') loadHistory();
         }
 
         function toggleKeyInput() {
             const provider = document.getElementById('aiProvider').value;
-            if (provider === 'openai') {
-                document.getElementById('openaiInput').classList.remove('hidden');
-                document.getElementById('geminiInput').classList.add('hidden');
+            const container = document.getElementById('apiKeyContainer');
+            if(provider === 'ollama') {
+                container.classList.add('opacity-50', 'pointer-events-none');
+                document.getElementById('apiKey').value = '';
             } else {
-                document.getElementById('openaiInput').classList.add('hidden');
-                document.getElementById('geminiInput').classList.remove('hidden');
+                container.classList.remove('opacity-50', 'pointer-events-none');
             }
         }
 
-        function getKey() {
-            const provider = document.getElementById('aiProvider').value;
-            return provider === 'openai'
-                ? document.getElementById('openaiKey').value
-                : document.getElementById('geminiKey').value;
+        async function loadHistory() {
+            try {
+                const res = await fetch('/api/history');
+                const jobs = await res.json();
+                const tbody = document.getElementById('historyTableBody');
+                tbody.innerHTML = jobs.map(job => `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="px-6 py-4">#${job.id}</td>
+                        <td class="px-6 py-4 font-medium">${job.target_url}</td>
+                        <td class="px-6 py-4">${new Date(job.start_time).toLocaleDateString()}</td>
+                        <td class="px-6 py-4">${job.lead_count}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 text-xs rounded-full ${job.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                ${job.status}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <button onclick="viewJob(${job.id})" class="text-primary hover:underline mr-2">View</button>
+                            <a href="/api/export/${job.id}" class="text-green-600 hover:underline">CSV</a>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch(e) {
+                console.error("Failed to load history", e);
+            }
         }
 
-        function initWS() {
-            if (ws && ws.readyState === WebSocket.OPEN) return;
+        async function viewJob(jobId) {
+            try {
+                const res = await fetch(`/api/history/${jobId}`);
+                if(!res.ok) return alert("Job not found");
+                const data = await res.json();
 
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            ws = new WebSocket(`${protocol}//${window.location.host}/ws/analyze`);
-
-            ws.onmessage = (event) => {
-                const msg = JSON.parse(event.data);
-                if (msg.type === 'status') {
-                    document.getElementById('statusMessage').textContent = msg.message;
-                } else if (msg.type === 'lead') {
-                    addLead(msg.data);
-                } else if (msg.type === 'complete') {
-                    document.getElementById('statusMessage').textContent = msg.message;
-                    document.getElementById('stopBtn').classList.add('hidden');
-                }
-            };
-
-            ws.onclose = () => {
-                console.log("WebSocket disconnected");
+                resetUI();
+                currentJobId = jobId;
+                document.getElementById('exportBtn').classList.remove('hidden');
                 document.getElementById('stopBtn').classList.add('hidden');
-            };
+                document.getElementById('statusBar').textContent = `Viewing historical job #${jobId}`;
+
+                data.leads.forEach(addLeadToUI);
+                document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+            } catch(e) {
+                console.error(e);
+            }
         }
 
         function resetUI() {
-            document.getElementById('results').classList.remove('hidden');
+            document.getElementById('resultsSection').classList.remove('hidden');
             document.getElementById('leadsList').innerHTML = '';
             document.getElementById('stopBtn').classList.remove('hidden');
+            document.getElementById('exportBtn').classList.add('hidden');
             stats = { total: 0, high: 0, medium: 0, low: 0 };
             updateStats();
         }
 
-        async function startDiscovery() {
-            initWS();
-            // Wait for connection
-            while (ws.readyState !== WebSocket.OPEN) {
-                await new Promise(r => setTimeout(r, 100));
-            }
+        function initWS() {
+            if (ws && ws.readyState === WebSocket.OPEN) return Promise.resolve();
 
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws/analyze`);
+
+            return new Promise((resolve, reject) => {
+                ws.onopen = resolve;
+                ws.onerror = reject;
+                ws.onmessage = (event) => {
+                    const msg = JSON.parse(event.data);
+                    if (msg.type === 'status') {
+                        document.getElementById('statusBar').textContent = msg.message;
+                        if(msg.job_id) currentJobId = msg.job_id;
+                    } else if (msg.type === 'lead') {
+                        addLeadToUI(msg.data);
+                    } else if (msg.type === 'complete') {
+                        document.getElementById('statusBar').textContent = msg.message;
+                        document.getElementById('stopBtn').classList.add('hidden');
+                        document.getElementById('exportBtn').classList.remove('hidden');
+                    }
+                };
+            });
+        }
+
+        function addLeadToUI(lead) {
+            stats.total++;
+            if (lead.lead_quality === 'high') stats.high++;
+            else if (lead.lead_quality === 'medium') stats.medium++;
+            else if (lead.lead_quality === 'low') stats.low++;
+            updateStats();
+
+            const container = document.getElementById('leadsList');
+            const el = document.createElement('div');
+
+            let borderClass = 'border-l-4 border-slate-400';
+            if(lead.lead_quality === 'high') borderClass = 'border-l-4 border-green-500';
+            if(lead.lead_quality === 'medium') borderClass = 'border-l-4 border-yellow-500';
+            if(lead.lead_quality === 'reject') borderClass = 'border-l-4 border-red-500 opacity-75';
+
+            const matches = lead.keyword_matches.map(m =>
+                `<span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs mr-1">${m.keyword}</span>`
+            ).join('');
+
+            el.className = `bg-white p-4 rounded shadow ${borderClass} animate-fade-in transition hover:shadow-md`;
+            el.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <div class="text-lg font-bold text-primary">${lead.email}</div>
+                        <div class="text-sm text-slate-600">${lead.person.full_name || 'Unknown Name'} • ${lead.person.job_title || 'Unknown Role'}</div>
+                    </div>
+                    <div class="flex flex-col items-end gap-1">
+                        <span class="px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800">Score: ${lead.relevance_score}</span>
+                        <span class="px-2 py-1 rounded text-xs ${lead.validation.mx_records_found ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${lead.validation.mx_records_found ? 'MX Valid' : 'MX Failed'}
+                        </span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-slate-500 mt-2">
+                    <div><i class="fas fa-building mr-1"></i> ${lead.company.name || lead.company.domain}</div>
+                    <div><i class="fas fa-link mr-1"></i> <a href="${lead.source.url}" target="_blank" class="hover:underline truncate block w-full">${lead.source.url}</a></div>
+                </div>
+                <div class="mt-2 pt-2 border-t border-slate-100">
+                    <div class="text-xs text-slate-400 mb-1">Matches:</div>
+                    <div class="flex flex-wrap gap-1">${matches || '<span class="italic text-slate-400">None</span>'}</div>
+                </div>
+            `;
+
+            container.insertBefore(el, container.firstChild);
+        }
+
+        function updateStats() {
+            document.getElementById('totalLeads').textContent = stats.total;
+            document.getElementById('highQuality').textContent = stats.high;
+            document.getElementById('mediumQuality').textContent = stats.medium;
+            document.getElementById('lowQuality').textContent = stats.low;
+        }
+
+        async function startDiscovery() {
+            await initWS();
             resetUI();
 
             const payload = {
@@ -371,91 +359,45 @@
                 max_depth: parseInt(document.getElementById('maxDepth').value),
                 max_pages: parseInt(document.getElementById('maxPages').value),
                 ai_provider: document.getElementById('aiProvider').value,
-                api_key: getKey()
+                api_key: document.getElementById('apiKey').value,
+                crawler_type: document.getElementById('crawlerType').value
             };
 
             ws.send(JSON.stringify({ action: "start_crawl", payload }));
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
         }
 
         async function startBulk() {
-            initWS();
-            while (ws.readyState !== WebSocket.OPEN) {
-                await new Promise(r => setTimeout(r, 100));
-            }
-
+            await initWS();
             const fileInput = document.getElementById('file');
-            if (!fileInput.files.length) return alert("Please select a file");
+            if(!fileInput.files.length) return alert("Select a file");
 
-            const file = fileInput.files[0];
             const reader = new FileReader();
-
-            reader.onload = async (e) => {
+            reader.onload = (e) => {
+                resetUI();
                 const text = e.target.result;
                 const emails = text.replace(/,/g, '\n').split('\n').map(e => e.trim()).filter(e => e.includes('@'));
-
-                resetUI();
 
                 const payload = {
                     emails: emails,
                     keywords: document.getElementById('keywords2').value.split(',').map(k => k.trim()),
                     ai_provider: document.getElementById('aiProvider').value,
-                    api_key: getKey()
+                    api_key: document.getElementById('apiKey').value
                 };
 
                 ws.send(JSON.stringify({ action: "start_bulk", payload }));
+                document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
             };
-
-            reader.readAsText(file);
+            reader.readAsText(fileInput.files[0]);
         }
 
         function stopProcess() {
-            if (ws) ws.send(JSON.stringify({ action: "stop" }));
-            document.getElementById('stopBtn').classList.add('hidden');
-            document.getElementById('statusMessage').textContent = "Stopping...";
+            if(ws) ws.send(JSON.stringify({ action: "stop" }));
         }
 
-        function addLead(lead) {
-            // Update stats
-            stats.total++;
-            if (lead.lead_quality === 'high') stats.high++;
-            else if (lead.lead_quality === 'medium') stats.medium++;
-            else if (lead.lead_quality === 'low') stats.low++;
-            updateStats();
-
-            const list = document.getElementById('leadsList');
-            const card = document.createElement('div');
-            card.className = `lead-card ${lead.lead_quality}`;
-
-            const matches = lead.keyword_matches.map(m =>
-                `<span style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.75em;">${m.keyword}</span>`
-            ).join(' ');
-
-            card.innerHTML = `
-                <div class="lead-header">
-                    <div class="email">${lead.email}</div>
-                    <div class="badges">
-                        <span class="badge badge-score">Score: ${lead.relevance_score}</span>
-                        <span class="badge ${lead.validation.mx_records_found ? 'badge-valid' : 'badge-invalid'}">
-                            ${lead.validation.mx_records_found ? 'MX Valid' : 'MX Failed'}
-                        </span>
-                    </div>
-                </div>
-                <div class="details">
-                    <div><strong>Role:</strong> ${lead.person.job_title || 'Unknown'}</div>
-                    <div><strong>Company:</strong> ${lead.company.name || lead.company.domain}</div>
-                    <div><strong>Matches:</strong> ${matches || 'None'}</div>
-                    <div><strong>Found via:</strong> ${lead.source.discovery_method}</div>
-                </div>
-            `;
-
-            // Prepend to show newest first
-            list.insertBefore(card, list.firstChild);
-        }
-
-        function updateStats() {
-            document.getElementById('totalLeads').textContent = stats.total;
-            document.getElementById('highQuality').textContent = stats.high;
-            document.getElementById('mediumQuality').textContent = stats.medium;
+        function exportCSV() {
+            if(!currentJobId) return;
+            window.location.href = `/api/export/${currentJobId}`;
         }
     </script>
 </body>

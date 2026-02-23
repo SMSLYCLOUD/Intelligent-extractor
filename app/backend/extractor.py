@@ -8,11 +8,27 @@ from app.backend.intelligence import LocalIntelligence, RemoteIntelligence
 class Extractor:
     def __init__(self, ai_provider: str = "openai", api_key: Optional[str] = None):
         self.local_intel = LocalIntelligence()
-        self.remote_intel = RemoteIntelligence(ai_provider, api_key) if api_key else None
+        # Initialize remote intel. If api_key is missing for some providers, it might be None effectively.
+        self.remote_intel = RemoteIntelligence(ai_provider, api_key)
 
-        # Regex for emails: Standard + simple obfuscation
+        # Regex for emails
+        # 1. Standard: user@domain.com
         self.email_pattern = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
-        self.obfuscated_at_pattern = re.compile(r'([a-zA-Z0-9._%+-]+)\s*[\(\[]\s*at\s*[\)\]]\s*([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})', re.IGNORECASE)
+
+        # 2. Obfuscated: user [at] domain [dot] com, user (at) domain . com, user at domain dot com
+        # We capture (user) ... (domain) ... (tld)
+        # This is complex, let's break it down or use multiple patterns.
+
+        # Pattern for "at" symbol variations
+        at_pattern = r'\s*(?:@|\[at\]|\(at\)|at)\s*'
+        # Pattern for "dot" symbol variations
+        dot_pattern = r'\s*(?:\.|\[dot\]|\(dot\)|dot)\s*'
+
+        # Combined pattern: (user) (at) (domain) (dot) (tld)
+        self.obfuscated_pattern = re.compile(
+            r'([a-zA-Z0-9._%+-]+)' + at_pattern + r'([a-zA-Z0-9.-]+)' + dot_pattern + r'([a-zA-Z]{2,})',
+            re.IGNORECASE
+        )
 
     async def extract_leads_from_text(self, text: str, url: str, page_title: str, keywords: List[str]) -> List[Lead]:
         leads = []
@@ -29,11 +45,19 @@ class Extractor:
                 seen_emails.add(email)
 
         # Obfuscated emails
-        for match in self.obfuscated_at_pattern.finditer(text):
-            email = f"{match.group(1)}@{match.group(2)}"
+        for match in self.obfuscated_pattern.finditer(text):
+            # Reconstruct email
+            user = match.group(1)
+            domain = match.group(2)
+            tld = match.group(3)
+            email = f"{user}@{domain}.{tld}"
+
+            # Avoid duplicates if regex caught the same thing (though standard usually catches first)
             if email not in seen_emails:
-                matches.append((email, match.start(), match.end(), "obfuscated"))
-                seen_emails.add(email)
+                # Check if it's a valid looking email (no spaces in parts)
+                if ' ' not in email:
+                    matches.append((email, match.start(), match.end(), "obfuscated"))
+                    seen_emails.add(email)
 
         # 2. Process each match
         for email, start, end, method in matches:
@@ -65,6 +89,8 @@ class Extractor:
             entities = self.local_intel.extract_entities(context)
             if entities["PERSON"]:
                 # Improvement: Find person closest to the email in context
+                # For now, just take the last one found before the email or first after?
+                # Taking the last one is a reasonable heuristic for "Contact X at ..."
                 lead.person.full_name = entities["PERSON"][-1]
                 names = lead.person.full_name.split()
                 if len(names) > 0: lead.person.first_name = names[0]
@@ -79,15 +105,16 @@ class Extractor:
             for m in local_analysis["matches"]:
                 lead.keyword_matches.append(KeywordMatch(**m))
 
-            # Relevance Scoring (Remote - Optional)
-            if self.remote_intel:
+            # Relevance Scoring (Remote)
+            # Only call if we have a provider instance
+            if self.remote_intel.provider_instance:
                 semantic_data = await self.remote_intel.analyze_relevance_semantic(
                     context, keywords, lead.person.full_name
                 )
                 if semantic_data:
                     # Blend scores: Remote is authoritative on semantics
                     remote_score = semantic_data.get("relevance_score", 0)
-                    base_relevance = (base_relevance + remote_score) / 2 # Simple average for now
+                    base_relevance = (base_relevance + remote_score) / 2 # Simple average
 
                     if semantic_data.get("job_title"):
                         lead.person.job_title = semantic_data["job_title"]

@@ -2,14 +2,18 @@ import asyncio
 import os
 from app.backend.extractor import Extractor
 from app.backend.validator import Validator
+from app.backend.models import Lead
 
 async def test_extraction_logic():
     print("Testing Extractor...")
-    extractor = Extractor()
+    extractor = Extractor() # Local only if no API key in env
 
     sample_text = """
-    Our team is led by John Doe, Chief Technology Officer. You can reach him at john.doe@example.com for technical inquiries.
-    Also contact marketing at jane.smith [at] example.com. She is our VP of Marketing.
+    1. Standard: john.doe@example.com
+    2. Obfuscated 1: jane.smith [at] example [dot] com
+    3. Obfuscated 2: admin (at) test . org
+    4. Obfuscated 3: support at company dot net
+    5. Junk: noreply@example.com
     """
 
     url = "https://example.com/team"
@@ -18,23 +22,26 @@ async def test_extraction_logic():
     leads = await extractor.extract_leads_from_text(sample_text, url, "Team Page", keywords)
 
     print(f"Found {len(leads)} leads.")
-    for lead in leads:
-        print(f"Lead: {lead.email}, Quality: {lead.lead_quality}, Relevance: {lead.relevance_score}")
-        print(f"  Person: {lead.person.full_name}, Role: {lead.person.job_title}")
-        print(f"  Matches: {[m.keyword for m in lead.keyword_matches]}")
+    expected_emails = [
+        "john.doe@example.com",
+        "jane.smith@example.com",
+        "admin@test.org",
+        "support@company.net",
+        "noreply@example.com" # Should be rejected but found
+    ]
 
-    assert len(leads) == 2
-    assert leads[0].email == "john.doe@example.com"
-    assert leads[0].person.first_name == "John"
-    # Note: Job title extraction in Local Intelligence is basic (NER doesn't always get titles perfectly without a specific model),
-    # but keyword matching should work.
+    found_emails = [l.email for l in leads]
+    print("Found emails:", found_emails)
 
-    print("\nTesting Validator (Mock)...")
-    # We can't easily test real DNS in some sandboxes without network, but let's try the syntax check
-    val_info = await Validator.validate("test@example.com")
-    print(f"Syntax Valid: {val_info.syntax_valid}")
-    # example.com actually has MX records usually, let's see if it passes
-    print(f"MX Found: {val_info.mx_records_found}")
+    # Check if all expected are found (some might be rejected quality)
+    for expected in expected_emails:
+        assert expected in found_emails, f"Missing {expected}"
+
+    # Check junk
+    junk_lead = next(l for l in leads if l.email == "noreply@example.com")
+    assert junk_lead.lead_quality == "reject", "Junk email not rejected"
+
+    print("\nExtraction Test Passed!")
 
 if __name__ == "__main__":
     asyncio.run(test_extraction_logic())

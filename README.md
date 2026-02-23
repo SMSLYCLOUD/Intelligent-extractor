@@ -4,18 +4,22 @@ An advanced AI-powered lead extraction specialist. This system intelligently dis
 
 ## Features
 
--   **Intelligent Extraction**: Uses regex and Context-Aware analysis to find explicit and obfuscated emails.
+-   **Intelligent Extraction**: Uses advanced regex and Context-Aware analysis to find explicit and obfuscated emails (e.g., `user [at] domain`).
 -   **Hybrid Intelligence**:
     -   **Local**: Spacy NLP for entity recognition (Person, Org) and keyword matching.
-    -   **Remote**: OpenAI integration for deep semantic relevance scoring (requires API key).
+    -   **Remote**: Supports OpenAI (GPT), Google Gemini, Anthropic (Claude), and Local LLMs (Ollama) for semantic relevance scoring.
+-   **Advanced Crawling**:
+    -   **Fast Mode**: High-speed HTTP crawling.
+    -   **Deep Mode**: Browser-based crawling (Playwright) for JavaScript-heavy sites.
+-   **Persistence**: Saves extraction jobs and leads to a local SQLite database for history tracking.
+-   **Frontend Dashboard**: Modern UI with history view, CSV export, and real-time status updates.
 -   **Validation**: DNS/MX record verification to ensure email deliverability.
--   **Smart Crawling**: Prioritizes pages like "Team", "About", "Contact" and handles depth limits.
--   **Frontend Dashboard**: Clean, responsive UI to run extractions and view detailed results.
 
 ## Requirements
 
 -   Python 3.9+
--   An OpenAI API Key (optional, but recommended for high-quality semantic analysis)
+-   API Keys (OpenAI, Gemini, Anthropic) optional but recommended.
+-   Ollama (optional) for local LLM support.
 
 ## Installation
 
@@ -24,7 +28,11 @@ An advanced AI-powered lead extraction specialist. This system intelligently dis
     ```bash
     pip install -r requirements.txt
     ```
-3.  Install the local NLP model:
+3.  Install browser binaries for Playwright:
+    ```bash
+    playwright install
+    ```
+4.  Install the local NLP model:
     ```bash
     python -m spacy download en_core_web_sm
     ```
@@ -37,6 +45,8 @@ An advanced AI-powered lead extraction specialist. This system intelligently dis
     ```
 2.  Edit `.env` to set your defaults (optional):
     -   `OPENAI_API_KEY`: Your OpenAI key.
+    -   `GEMINI_API_KEY`: Your Google Gemini key.
+    -   `ANTHROPIC_API_KEY`: Your Anthropic key.
     -   `MAX_DEPTH`: Default crawling depth.
     -   `HOST`/`PORT`: Server configuration.
 
@@ -47,22 +57,25 @@ An advanced AI-powered lead extraction specialist. This system intelligently dis
     python run.py
     ```
 2.  Open your browser and navigate to `http://localhost:8000`.
-3.  Enter the target Website URL and Keywords (e.g., "CTO, Marketing, Engineering").
-4.  (Optional) Provide an OpenAI API Key in the UI if not set in `.env`.
-5.  Click "Start Extraction".
+3.  Choose your **AI Provider** and enter API keys if needed.
+4.  Select **Crawler Type** (Fast or Deep).
+5.  Enter the target Website URL and Keywords (e.g., "CTO, Marketing, Engineering").
+6.  Click "Start Extraction".
+7.  View results in real-time, browse **History**, or **Export to CSV**.
 
 ## Architecture
 
 -   **`run.py`**: Entry point script.
 -   **`app/backend/`**:
-    -   `main.py`: FastAPI application and endpoints.
-    -   `crawler.py`: Async web crawler with priority logic.
-    -   `extractor.py`: Core logic for finding emails and context.
-    -   `intelligence.py`: Wrappers for Spacy (Local) and OpenAI (Remote).
+    -   `main.py`: FastAPI application, endpoints, and WebSocket logic.
+    -   `crawler.py`: `FastCrawler` (aiohttp) and `DeepCrawler` (playwright).
+    -   `extractor.py`: Enhanced regex and logic for finding emails.
+    -   `intelligence.py`: Unified interface for OpenAI, Gemini, Anthropic, and Ollama.
+    -   `database.py` & `db_models.py`: SQLite database configuration and models.
     -   `validator.py`: Email syntax and DNS validation.
     -   `models.py`: Pydantic data models.
 -   **`app/frontend/static/`**:
-    -   `index.html`: Single-page application for the UI.
+    -   `index.html`: Modernized single-page application using Tailwind CSS.
 
 ## Testing
 
