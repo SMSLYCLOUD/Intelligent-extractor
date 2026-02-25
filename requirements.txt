@@ -10,3 +10,7 @@ pydantic
 python-dotenv
 google-generativeai
 python-multipart
+sqlalchemy
+playwright
+anthropic
+requests
