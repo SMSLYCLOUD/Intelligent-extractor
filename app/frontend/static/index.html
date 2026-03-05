@@ -376,10 +376,9 @@
             reader.onload = (e) => {
                 resetUI();
                 const text = e.target.result;
-                const emails = text.replace(/,/g, '\n').split('\n').map(e => e.trim()).filter(e => e.includes('@'));
 
                 const payload = {
-                    emails: emails,
+                    emails: [text], // Sending raw text in array to keep signature compat
                     keywords: document.getElementById('keywords2').value.split(',').map(k => k.trim()),
                     ai_provider: document.getElementById('aiProvider').value,
                     api_key: document.getElementById('apiKey').value
