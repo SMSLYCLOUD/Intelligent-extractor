@@ -114,7 +114,6 @@ async def enrich_leads(
     try:
         content = await file.read()
         text = content.decode("utf-8")
-        emails = [e.strip() for e in text.replace(',', '\n').split('\n') if '@' in e]
         keyword_list = [k.strip() for k in keywords.split(',')]
 
         used_key = _get_api_key(ai_provider, api_key)
@@ -133,7 +132,7 @@ async def enrich_leads(
 
         processor = BulkProcessor(keyword_list, ai_provider, used_key)
         leads = []
-        async for lead in processor.process_stream(emails):
+        async for lead in processor.process_stream([text]):
             leads.append(lead)
             _save_lead_to_db(db, job.id, lead)
 

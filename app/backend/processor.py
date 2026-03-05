@@ -1,7 +1,10 @@
 import asyncio
+import aiohttp
+from bs4 import BeautifulSoup
 from typing import List, AsyncGenerator
 from app.backend.crawler import Crawler
 from app.backend.models import Lead
+from app.backend.intelligence import RemoteIntelligence
 
 class BulkProcessor:
     def __init__(self, keywords: List[str], ai_provider: str = "openai", api_key: str = None):
@@ -9,13 +12,80 @@ class BulkProcessor:
         self.ai_provider = ai_provider
         self.api_key = api_key
         self.stopped = False
+        self.domain_cache = {}  # Cache to store domain liveliness and industry info
 
     def stop(self):
         self.stopped = True
 
-    async def process_stream(self, emails: List[str]) -> AsyncGenerator[Lead, None]:
-        # 1. Deduplicate emails
-        unique_emails = list(set(emails))
+    async def _check_domain_alive(self, domain: str) -> tuple[bool, str, str]:
+        if domain in self.domain_cache and 'alive' in self.domain_cache[domain]:
+            return self.domain_cache[domain]['alive'], self.domain_cache[domain].get('start_url'), self.domain_cache[domain].get('content', '')
+
+        urls_to_try = [f"https://{domain}", f"http://{domain}"]
+        async with aiohttp.ClientSession() as session:
+            for url in urls_to_try:
+                try:
+                    async with session.get(url, timeout=10) as response:
+                        if response.status < 400:
+                            content_type = response.headers.get('Content-Type', '')
+                            html_content = ""
+                            if 'text/html' in content_type:
+                                html = await response.text()
+                                soup = BeautifulSoup(html, 'html.parser')
+                                html_content = soup.get_text(separator=' ', strip=True)[:5000] # take first 5000 chars for analysis
+
+                            if domain not in self.domain_cache:
+                                self.domain_cache[domain] = {}
+                            self.domain_cache[domain]['alive'] = True
+                            self.domain_cache[domain]['start_url'] = url
+                            self.domain_cache[domain]['content'] = html_content
+                            return True, url, html_content
+                except Exception:
+                    continue
+
+        if domain not in self.domain_cache:
+            self.domain_cache[domain] = {}
+        self.domain_cache[domain]['alive'] = False
+        self.domain_cache[domain]['start_url'] = None
+        self.domain_cache[domain]['content'] = ""
+        return False, None, ""
+
+    async def _check_industry_match(self, domain: str, text_content: str) -> bool:
+        if not text_content or not self.keywords:
+            return True # If no content or no keywords, allow it
+
+        if domain in self.domain_cache and 'industry_match' in self.domain_cache[domain]:
+            return self.domain_cache[domain]['industry_match']
+
+        # Simple fast check
+        text_lower = text_content.lower()
+        for kw in self.keywords:
+            if kw.lower() in text_lower:
+                self.domain_cache[domain]['industry_match'] = True
+                return True
+
+        # If fast check fails, try remote intelligence
+        remote = RemoteIntelligence(self.ai_provider, self.api_key)
+        try:
+            res = await remote.analyze_relevance_semantic(text_content, self.keywords)
+            if res and res.get('relevance_score', 0) > 30: # arbitrary threshold for industry match
+                self.domain_cache[domain]['industry_match'] = True
+                return True
+        except Exception as e:
+            print(f"Error checking industry for {domain}: {e}")
+
+        self.domain_cache[domain]['industry_match'] = False
+        return False
+
+    async def process_stream(self, raw_input: List[str]) -> AsyncGenerator[Lead, None]:
+        import re
+
+        # 1. Extract and deduplicate emails using regex on raw text input
+        # Convert list of strings into a single text block if needed
+        text_content = " ".join(raw_input) if isinstance(raw_input, list) else str(raw_input)
+
+        email_pattern = re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
+        unique_emails = list(set(email_pattern.findall(text_content)))
 
         # 2. Group by domain
         domain_map = {}
@@ -33,7 +103,16 @@ class BulkProcessor:
             if self.stopped: break
 
             print(f"Processing domain: {domain} for {len(domain_emails)} emails...")
-            start_url = f"https://{domain}"
+
+            is_alive, start_url, homepage_content = await self._check_domain_alive(domain)
+            if not is_alive:
+                print(f"Domain {domain} is not reachable. Skipping...")
+                continue
+
+            is_industry_match = await self._check_industry_match(domain, homepage_content)
+            if not is_industry_match:
+                print(f"Domain {domain} does not match target industries. Skipping...")
+                continue
 
             crawler = Crawler(
                 start_url=start_url,
@@ -101,8 +180,8 @@ class BulkProcessor:
 
                     yield lead
 
-    async def process_emails(self, emails: List[str]) -> List[Lead]:
+    async def process_emails(self, raw_input: List[str]) -> List[Lead]:
         leads = []
-        async for lead in self.process_stream(emails):
+        async for lead in self.process_stream(raw_input):
             leads.append(lead)
         return leads
